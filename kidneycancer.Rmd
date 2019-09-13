@@ -3,15 +3,22 @@ title: "Analysis of kidney cancer"
 author: "Robin Ryder"
 date: "12/09/2019"
 output: html_document
+knit: (function(input_file, encoding) {
+  out_dir <- 'docs';
+  rmarkdown::render(input_file,
+ encoding=encoding,
+ output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-This is an attempt at reproducing the analysis of Section 2.7 of Bayesian Data Analysis, 3rd edition (Gelman et al.), on kidney cancer rates in the USA in the 1980s. I have done my best to clean the data from the original, which can be found at <http://www.stat.columbia.edu/~gelman/book/data/cancer/>. Andrew wrote a blog post  (<https://statmodeling.stat.columbia.edu/2009/11/01/just_to_disillu/>) to "disillusion [us] about the reproducibility of textbook analysis", in which he refers to this example. This might then be an attempt at reillusionment...
+This is an attempt at reproducing the analysis of Section 2.7 of [Bayesian Data Analysis, 3rd edition (Gelman et al.)](https://www.amazon.fr/gp/product/1439840954/ref=as_li_tl?ie=UTF8&camp=1642&creative=6746&creativeASIN=1439840954&linkCode=as2&tag=robrydsblo-21&linkId=7b634509b7f4b9f01821ac05396ff2f3), on kidney cancer rates in the USA in the 1980s. I have done my best to clean the data from the [original](http://www.stat.columbia.edu/~gelman/book/data/cancer/). Andrew wrote a [blog post](https://statmodeling.stat.columbia.edu/2009/11/01/just_to_disillu/) to "disillusion [us] about the reproducibility of textbook analysis", in which he refers to this example. This might then be an attempt at reillusionment...
 
-```{r}
+The cleaner data are on [GitHub](https://github.com/robinryder/BDA-kidney/blob/master/KidneyCancerClean.csv).
+
+```{r message=FALSE}
 library(usmap)
 library(ggplot2)
 ```
@@ -54,7 +61,7 @@ The reason for this pattern (as explained in BDA3) is that these are counties wi
 
 This is hinted at in this histogram of the $(\theta_j)$:
 
-```{r}
+```{r warning=F}
 ggplot(data=d, aes(d$thetahat)) + 
   geom_histogram(bins=30, fill="lightblue") + labs(x="Estimated kidney cancer death rate (maximum likelihood)", y="Number of counties") +
   xlim(c(-1e-5, 5e-4))
@@ -65,11 +72,11 @@ ggplot(data=d, aes(d$thetahat)) +
 
 If you have ever followed a Bayesian modelling course, you are probably screaming that this calls for a hierarchical model. I agree (and I'm pretty the authors of BDA do as well), but here is a more basic Bayesian approach. Take a common $\Gamma(\alpha, \beta)$ distribution for all the $(\theta_j)$; I'll go for $\alpha=15$ and $\beta = 200\ 000$, which is slightly vaguer than the prior used in BDA. Obviously, you should try various values of the prior parameters to check their influence.
 
-The prior is conjugate, so the posterior is $\theta_j|K_j \sim \Gamma(\alpha + K_j, \beta + n_j)$. 
+The prior is conjugate, so the posterior is $\theta_j|K_j \sim \Gamma(\alpha + K_j, \beta + n_j)$. For small counties, the posterior will be extremely close to the prior; for larger counties, the likelihood will take over.
 
 It is usually a shame to use only point estimates, but here it will be sufficient: let us compute the posterior mean of $\theta_j$. The histogram looks very different:
 
-```{r}
+```{r warning=F}
 alpha = 15
 beta = 2e5
 d$thetabayes = (alpha + d$dct) / (beta + d$pop)
